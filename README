@@ -1,0 +1,5 @@
+This is a baseline ActionScript 3 library for interacting with the Parse REST API.  The library supports create, read, update, delete and "where" searches.  
+
+Note that Flash Player does not allow modifications to the HTTP Authentication header, so this library works only using AIR.  I have tested it both on the desktop and for mobile applications.  
+
+There are two dependencies.  The first is a Base64 class written by Steven Webster.  It is included in it's entirety.  The second is on JSON encoding and decoding support from the AS3 Core Library (available on GitHub via Mike Chambers).  AIR 3 supports native JSON, which would be preferable, though I am waiting for an official release before removing the AS3 Core Library dependency.
