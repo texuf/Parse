@@ -4,6 +4,7 @@ package com.adobe.khoyt.parse.events
 	
 	public class ParseEvent extends Event
 	{
+		public static const COUNT:String = "parseCount";
 		public static const CREATE:String = "parseCreate";
 		public static const READ:String = "parseRead";
 		public static const REMOVE:String = "parseRemove";

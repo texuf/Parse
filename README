@@ -1,4 +1,4 @@
-This is a baseline ActionScript 3 library for interacting with the Parse REST API.  The library supports create, read, update, delete and "where" searches.  
+This is a baseline ActionScript 3 library for interacting with the Parse REST API.  The library supports count, create, read, update, delete and "where" searches.  Searches also support limiting the number of records, and skipping a number of records.  Note that there is no checking on skip or limit values.  Maximum value of limit per the Parse API is 1000.
 
 Note that Flash Player does not allow modifications to the HTTP Authentication header, so this library works only using AIR.  I have tested it both on the desktop and for mobile applications.  
 

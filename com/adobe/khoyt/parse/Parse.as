@@ -1,8 +1,8 @@
 package com.adobe.khoyt.parse
 {
-	import com.adobe.serialization.json.JSON;
-	
 	import com.adobe.khoyt.parse.events.ParseEvent;
+	import com.adobe.khoyt.parse.utils.Base64;
+	import com.adobe.serialization.json.JSON;
 	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -11,8 +11,6 @@ package com.adobe.khoyt.parse
 	import flash.net.URLRequestHeader;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
-	
-	import com.adobe.khoyt.parse.utils.Base64;
 
 	public class Parse extends EventDispatcher
 	{
@@ -29,6 +27,40 @@ package com.adobe.khoyt.parse
 			super();
 			this.username = username;
 			this.password = password;
+		}
+		
+		public function count( className:String, where:String = null, count:Number = 1, limit:Number = 0 ):void
+		{
+			var authorization:String = null;
+			var query:URLVariables = null;
+			var request:URLRequest = null;	
+			var header:URLRequestHeader = null;			
+
+			query = new URLVariables();			
+			query.count = count;
+			query.limit = limit;			
+			
+			if( where != null )
+			{
+				query.where = JSON.encode( where );
+			}
+			
+			authorization = Base64.encode( username + ":" + password );			
+			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
+			
+			request = new URLRequest( PARSE_API + className );
+			request.method = URLRequestMethod.GET;
+			request.contentType = JSON_CONTENT;
+			request.data = query;							
+			request.requestHeaders.push( header );
+			
+			if( loader == null )
+			{
+				loader = new URLLoader();				
+			}
+			
+			loader.addEventListener( Event.COMPLETE, doCountComplete );
+			loader.load( request );			
 		}
 		
 		public function create( className:String, value:Object ):void
@@ -103,16 +135,19 @@ package com.adobe.khoyt.parse
 			loader.load( request );			
 		}				
 		
-		public function search( className:String, where:Object = null ):void
+		public function search( className:String, where:Object = null, limit:Number = 100, skip:Number = 0 ):void
 		{
 			var authorization:String = null;
 			var query:URLVariables = null;
 			var request:URLRequest = null;	
 			var header:URLRequestHeader = null;			
 			
+			query = new URLVariables();
+			query.limit = limit;
+			query.skip = skip;
+			
 			if( where != null )
 			{
-				query = new URLVariables();
 				query.where = JSON.encode( where );
 			}
 			
@@ -122,12 +157,7 @@ package com.adobe.khoyt.parse
 			request = new URLRequest( PARSE_API + className );
 			request.method = URLRequestMethod.GET;
 			request.contentType = JSON_CONTENT;
-			
-			if( where != null )
-			{
-				request.data = query;				
-			}
-
+			request.data = query;				
 			request.requestHeaders.push( header );
 			
 			if( loader == null )
@@ -163,6 +193,18 @@ package com.adobe.khoyt.parse
 			loader.load( request );			
 		}				
 		
+		protected function doCountComplete( event:Event ):void
+		{
+			var dispatch:ParseEvent = null;
+			var decode:Object = JSON.decode( loader.data );
+			
+			loader.removeEventListener( Event.COMPLETE, doCountComplete );
+			
+			dispatch = new ParseEvent( ParseEvent.COUNT );
+			dispatch.value = decode.count;
+			dispatchEvent( dispatch );			
+		}
+		
 		protected function doCreateComplete( event:Event ):void
 		{
 			var dispatch:ParseEvent = null;
@@ -176,8 +218,6 @@ package com.adobe.khoyt.parse
 			dispatch = new ParseEvent( ParseEvent.CREATE );
 			dispatch.value = hold;
 			dispatchEvent( dispatch );
-			
-			hold = null;
 		}
 		
 		protected function doReadComplete( event:Event ):void
