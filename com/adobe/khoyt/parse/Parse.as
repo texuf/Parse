@@ -6,6 +6,7 @@ package com.adobe.khoyt.parse
 	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.events.IOErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.net.URLRequestHeader;
@@ -18,24 +19,35 @@ package com.adobe.khoyt.parse
 		public static const JSON_CONTENT:String = "application/json";
 		
 		private var hold:Object = null;
-		private var username:String = null;
-		private var password:String = null;
+		private var applicationId:String = null;
+		private var restApiKey:String = null;
 		private var loader:URLLoader = null;
 		
-		public function Parse( username:String, password:String )
+		public function Parse( applicationId:String, restApiKey:String )
 		{
 			super();
-			this.username = username;
-			this.password = password;
+			this.applicationId = applicationId;
+			this.restApiKey = restApiKey;
+		}
+		
+		private function createURLRequest(className:String, requestMethod:String, data:Object = null):URLRequest
+		{
+			var request:URLRequest = new URLRequest(PARSE_API + className);
+			request.method = requestMethod;
+			request.contentType = JSON_CONTENT;
+			request.data = data;
+			request.requestHeaders.push(new URLRequestHeader("Content-Type","application/json"));
+			request.requestHeaders.push( new URLRequestHeader("X-Parse-Application-Id", this.applicationId) );
+			request.requestHeaders.push( new URLRequestHeader("X-Parse-REST-API-Key", this.restApiKey));
+			
+			return request;
 		}
 		
 		public function count( className:String, where:String = null, count:Number = 1, limit:Number = 0 ):void
 		{
-			var authorization:String = null;
 			var query:URLVariables = null;
 			var request:URLRequest = null;	
-			var header:URLRequestHeader = null;			
-
+			
 			query = new URLVariables();			
 			query.count = count;
 			query.limit = limit;			
@@ -45,14 +57,8 @@ package com.adobe.khoyt.parse
 				query.where = JSON.encode( where );
 			}
 			
-			authorization = Base64.encode( username + ":" + password );			
-			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
 			
-			request = new URLRequest( PARSE_API + className );
-			request.method = URLRequestMethod.GET;
-			request.contentType = JSON_CONTENT;
-			request.data = query;							
-			request.requestHeaders.push( header );
+			request = createURLRequest(className, URLRequestMethod.GET, query);
 			
 			if( loader == null )
 			{
@@ -65,20 +71,12 @@ package com.adobe.khoyt.parse
 		
 		public function create( className:String, value:Object ):void
 		{
-			var authorization:String = null;			
 			var request:URLRequest = null;	
-			var header:URLRequestHeader = null;			
 			
 			hold = value;
 			
-			authorization = Base64.encode( username + ":" + password );			
-			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
+			request = createURLRequest(className, URLRequestMethod.POST, JSON.encode( value ));
 			
-			request = new URLRequest( PARSE_API + className );
-			request.method = URLRequestMethod.POST;
-			request.contentType = JSON_CONTENT;
-			request.data = JSON.encode( value );
-			request.requestHeaders.push( header );
 			
 			if( loader == null )
 			{
@@ -91,17 +89,7 @@ package com.adobe.khoyt.parse
 		
 		public function read( className:String, objectId:String ):void
 		{
-			var authorization:String = null;			
-			var request:URLRequest = null;	
-			var header:URLRequestHeader = null;			
-			
-			authorization = Base64.encode( username + ":" + password );			
-			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
-			
-			request = new URLRequest( PARSE_API + className + "/" + objectId );
-			request.method = URLRequestMethod.GET;
-			request.contentType = JSON_CONTENT;
-			request.requestHeaders.push( header );
+			var request:URLRequest = createURLRequest(className + "/" + objectId, URLRequestMethod.GET, null);
 			
 			if( loader == null )
 			{
@@ -114,17 +102,7 @@ package com.adobe.khoyt.parse
 		
 		public function remove( className:String, objectId:String ):void
 		{
-			var authorization:String = null;			
-			var request:URLRequest = null;	
-			var header:URLRequestHeader = null;			
-			
-			authorization = Base64.encode( username + ":" + password );			
-			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
-			
-			request = new URLRequest( PARSE_API + className + "/" + objectId );
-			request.method = URLRequestMethod.DELETE;
-			request.contentType = JSON_CONTENT;
-			request.requestHeaders.push( header );
+			var request:URLRequest = createURLRequest(className + "/" + objectId, URLRequestMethod.DELETE, null);;	
 			
 			if( loader == null )
 			{
@@ -137,10 +115,8 @@ package com.adobe.khoyt.parse
 		
 		public function search( className:String, where:Object = null, limit:Number = 100, skip:Number = 0 ):void
 		{
-			var authorization:String = null;
 			var query:URLVariables = null;
 			var request:URLRequest = null;	
-			var header:URLRequestHeader = null;			
 			
 			query = new URLVariables();
 			query.limit = limit;
@@ -151,14 +127,8 @@ package com.adobe.khoyt.parse
 				query.where = JSON.encode( where );
 			}
 			
-			authorization = Base64.encode( username + ":" + password );			
-			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
 			
-			request = new URLRequest( PARSE_API + className );
-			request.method = URLRequestMethod.GET;
-			request.contentType = JSON_CONTENT;
-			request.data = query;				
-			request.requestHeaders.push( header );
+			request = createURLRequest(className, URLRequestMethod.GET, query);
 			
 			if( loader == null )
 			{
@@ -171,18 +141,7 @@ package com.adobe.khoyt.parse
 		
 		public function update( className:String, objectId:String, value:Object ):void
 		{
-			var authorization:String = null;			
-			var request:URLRequest = null;	
-			var header:URLRequestHeader = null;			
-			
-			authorization = Base64.encode( username + ":" + password );			
-			header = new URLRequestHeader( "Authorization", "Basic " + authorization );						
-			
-			request = new URLRequest( PARSE_API + className + "/" + objectId );
-			request.method = URLRequestMethod.PUT;
-			request.contentType = JSON_CONTENT;
-			request.data = JSON.encode( value );
-			request.requestHeaders.push( header );
+			var request:URLRequest = createURLRequest(className + "/" + objectId, URLRequestMethod.PUT, JSON.encode( value ));	
 			
 			if( loader == null )
 			{
